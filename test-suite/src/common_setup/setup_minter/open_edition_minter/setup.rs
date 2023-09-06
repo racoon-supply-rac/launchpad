@@ -21,10 +21,12 @@ use crate::common_setup::setup_minter::open_edition_minter::mock_params::{
 
 use crate::common_setup::setup_minter::common::constants::CREATION_FEE;
 
+#[allow(clippy::too_many_arguments)]
 pub fn build_init_msg(
     init_msg: Option<OpenEditionMinterInitMsgExtension>,
     start_time: Option<Timestamp>,
     end_time: Option<Timestamp>,
+    num_tokens: Option<u32>,
     per_address_limit_minter: Option<u32>,
     nft_data: NftData,
     mint_price: Option<Coin>,
@@ -36,6 +38,7 @@ pub fn build_init_msg(
             start_time,
             end_time,
             per_address_limit_minter,
+            num_tokens,
             mint_price,
             nft_data,
             payment_address,
@@ -83,6 +86,7 @@ pub fn setup_open_edition_minter_contract(
         end_time,
         Some(params.min_mint_price.clone()),
         Some(params.extension.max_per_address_limit),
+        None,
         nft_data.clone(),
         collection_params,
         None,
@@ -91,6 +95,7 @@ pub fn setup_open_edition_minter_contract(
         init_msg,
         start_time,
         end_time,
+        Some(params.extension.max_token_limit),
         Some(params.extension.max_per_address_limit),
         nft_data,
         Some(params.min_mint_price),

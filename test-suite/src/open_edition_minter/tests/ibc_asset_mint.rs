@@ -1,5 +1,5 @@
 use base_factory::ContractError as BaseContractError;
-use cosmwasm_std::{coin, coins, Addr, Decimal, Uint128};
+use cosmwasm_std::{coin, coins, Addr, Decimal, Uint128, Timestamp};
 use cw_multi_test::{BankSudo, Executor, SudoMsg};
 use open_edition_factory::types::{NftData, NftMetadataType};
 use open_edition_minter::msg::ExecuteMsg;
@@ -32,11 +32,12 @@ fn check_custom_create_minter_denom() {
     };
     let vt = open_edition_minter_custom_template(
         None,
-        None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         Some(10),
         Some(2),
         Some(mint_price.clone()),
+        None,
         custom_params,
         None,
         None,
@@ -91,11 +92,12 @@ fn one_hundred_percent_burned_ibc_minter() {
     };
     let vt = open_edition_minter_custom_template(
         None,
-        None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         Some(10),
         Some(2),
         Some(mint_price.clone()),
+        None,
         custom_params,
         None,
         None,
@@ -153,11 +155,12 @@ fn zero_mint_fee() {
     };
     let vt = open_edition_minter_custom_template(
         None,
-        None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         Some(10),
         Some(2),
         Some(mint_price.clone()),
+        None,
         custom_params,
         None,
         None,
@@ -220,7 +223,7 @@ fn denom_mismatch_creating_minter() {
         .unwrap();
 
     let mut init_msg =
-        mock_init_minter_extension(None, None, None, Some(mint_price.clone()), nft_data, None);
+        mock_init_minter_extension(None, None, None, Some(1_000u32), Some(mint_price.clone()), nft_data, None);
     init_msg.mint_price = mint_price;
     let mut msg = mock_create_minter_init_msg(mock_collection_params(), init_msg);
     msg.collection_params.code_id = sg721_code_id;

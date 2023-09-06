@@ -5,7 +5,7 @@ use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 use open_edition_factory::types::{NftData, NftMetadataType};
 use sg_metadata::{Metadata, Trait};
 
-use crate::common_setup::setup_minter::common::constants::MIN_MINT_PRICE_OPEN_EDITION;
+use crate::common_setup::setup_minter::common::constants::{MAX_TOKEN_LIMIT, MIN_MINT_PRICE_OPEN_EDITION};
 use crate::common_setup::templates::{
     open_edition_minter_custom_template, OpenEditionMinterCustomParams,
 };
@@ -15,10 +15,11 @@ fn check_valid_create_minter() {
     // Set a per address lower or equal than the factory -> ok
     let vt = open_edition_minter_custom_template(
         None,
-        None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         Some(10),
         Some(5),
+        None,
         None,
         OpenEditionMinterCustomParams::default(),
         None,
@@ -33,10 +34,11 @@ fn check_invalid_create_minter_address_limit() {
     // minter gives 20 -> error
     let vt = open_edition_minter_custom_template(
         None,
-        None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         Some(10),
         Some(20),
+        None,
         None,
         OpenEditionMinterCustomParams::default(),
         None,
@@ -62,10 +64,11 @@ fn check_invalid_create_minter_address_limit() {
     // The minimum should be 1 -> 0 will give an error
     let vt = open_edition_minter_custom_template(
         None,
-        None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         Some(10),
         Some(0),
+        None,
         None,
         OpenEditionMinterCustomParams::default(),
         None,
@@ -93,10 +96,11 @@ fn check_invalid_create_minter_start_end_time() {
     // If start time < now
     let vt = open_edition_minter_custom_template(
         Some(Timestamp::from_nanos(100_000)),
-        None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         Some(10),
         Some(2),
+        None,
         None,
         OpenEditionMinterCustomParams::default(),
         None,
@@ -121,6 +125,7 @@ fn check_invalid_create_minter_start_end_time() {
         Some(10),
         Some(2),
         None,
+        None,
         OpenEditionMinterCustomParams::default(),
         None,
         None,
@@ -142,7 +147,7 @@ fn check_invalid_create_minter_mint_price() {
     // Invalid denom
     let vt = open_edition_minter_custom_template(
         None,
-        None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         Some(10),
         Some(2),
@@ -150,6 +155,7 @@ fn check_invalid_create_minter_mint_price() {
             denom: "uinvalid".to_string(),
             amount: Uint128::new(MIN_MINT_PRICE_OPEN_EDITION),
         }),
+        None,
         OpenEditionMinterCustomParams::default(),
         None,
         None,
@@ -168,7 +174,7 @@ fn check_invalid_create_minter_mint_price() {
     // Invalid price
     let vt = open_edition_minter_custom_template(
         None,
-        None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         Some(10),
         Some(2),
@@ -176,6 +182,7 @@ fn check_invalid_create_minter_mint_price() {
             denom: NATIVE_DENOM.to_string(),
             amount: Uint128::new(100u128),
         }),
+        None,
         OpenEditionMinterCustomParams::default(),
         None,
         None,
@@ -203,7 +210,7 @@ fn check_custom_create_minter_denom() {
     };
     let vt = open_edition_minter_custom_template(
         None,
-        None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         Some(10),
         Some(2),
@@ -211,6 +218,7 @@ fn check_custom_create_minter_denom() {
             denom: denom.to_string(),
             amount: Uint128::new(MIN_MINT_PRICE_OPEN_EDITION),
         }),
+        None,
         custom_params,
         None,
         None,
@@ -245,12 +253,13 @@ fn check_invalid_create_minter_nft_data() {
     // Sending None for extension and token_uri
     let vt = open_edition_minter_custom_template(
         None,
-        None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         Some(NftData {
             nft_data_type: NftMetadataType::OffChainMetadata,
             extension: None,
             token_uri: None,
         }),
+        None,
         None,
         None,
         None,
@@ -272,12 +281,13 @@ fn check_invalid_create_minter_nft_data() {
     // Sending None for token_uri but offchain metadata
     let vt = open_edition_minter_custom_template(
         None,
-        None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         Some(NftData {
             nft_data_type: NftMetadataType::OffChainMetadata,
             extension: metadata_def,
             token_uri: None,
         }),
+        None,
         None,
         None,
         None,
@@ -299,12 +309,13 @@ fn check_invalid_create_minter_nft_data() {
     // Sending None for extension but onchain metadata
     let vt = open_edition_minter_custom_template(
         None,
-        None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         Some(NftData {
             nft_data_type: NftMetadataType::OnChainMetadata,
             extension: None,
             token_uri: token_uri_def.clone(),
         }),
+        None,
         None,
         None,
         None,
@@ -326,12 +337,13 @@ fn check_invalid_create_minter_nft_data() {
     // Sending extension and token_uri
     let vt = open_edition_minter_custom_template(
         None,
-        None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         Some(NftData {
             nft_data_type: NftMetadataType::OnChainMetadata,
             extension: None,
             token_uri: token_uri_def,
         }),
+        None,
         None,
         None,
         None,
@@ -349,4 +361,37 @@ fn check_invalid_create_minter_nft_data() {
             .to_string(),
         "InvalidNftDataProvided".to_string()
     );
+}
+
+#[test]
+fn check_invalid_create_minter_max_tokens() {
+    // Invalid max tokens
+    let vt = open_edition_minter_custom_template(
+        None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
+        None,
+        Some(10),
+        Some(5),
+        None,
+        Some(MAX_TOKEN_LIMIT + 100),
+        OpenEditionMinterCustomParams::default(),
+        None,
+        None,
+    );
+    assert!(vt.is_err());
+
+    // Max Tokens and End Time to None
+    let vt = open_edition_minter_custom_template(
+        None,
+        None,
+        None,
+        Some(10),
+        Some(5),
+        None,
+        None,
+        OpenEditionMinterCustomParams::default(),
+        None,
+        None,
+    );
+    assert!(vt.is_err());
 }

@@ -18,6 +18,7 @@ use crate::common_setup::templates::{
 fn frozen_factory_cannot_create_new_minters() {
     let vt = open_edition_minter_custom_template(
         None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         None,
         None,
@@ -42,6 +43,7 @@ fn frozen_factory_cannot_create_new_minters() {
         mint_fee_bps: None,
         max_trading_offset_secs: None,
         extension: OpenEditionUpdateParamsExtension {
+            max_token_limit: None,
             max_per_address_limit: None,
             min_mint_price: None,
             airdrop_mint_fee_bps: None,
@@ -73,6 +75,7 @@ fn frozen_factory_cannot_create_new_minters() {
         Some(end_time),
         mint_price,
         per_address_limit_minter,
+        None,
         default_nft_data,
         collection_params,
         None,

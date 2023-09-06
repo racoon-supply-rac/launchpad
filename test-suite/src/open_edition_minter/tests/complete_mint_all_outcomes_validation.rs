@@ -3,7 +3,7 @@ use cw721::{Cw721QueryMsg, NumTokensResponse, OwnerOfResponse};
 use cw_multi_test::{BankSudo, Executor, SudoMsg};
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
-use open_edition_minter::msg::{EndTimeResponse, ExecuteMsg, QueryMsg, TotalMintCountResponse};
+use open_edition_minter::msg::{ConfigResponse, EndTimeResponse, ExecuteMsg, MintableNumTokensResponse, QueryMsg, TotalMintCountResponse};
 use open_edition_minter::msg::{MintCountResponse, MintPriceResponse, StartTimeResponse};
 use sg4::StatusResponse;
 
@@ -15,15 +15,18 @@ use crate::common_setup::templates::{
 
 const MINT_PRICE: u128 = 100_000_000;
 
-#[test]
-fn check_mint_revenues_distribution() {
+fn check_mint_revenues_distribution(
+    num_tokens: Option<u32>,
+    end_minter_time: Option<Timestamp>
+) {
     let vt = open_edition_minter_custom_template(
         None,
-        None,
+        end_minter_time,
         None,
         None,
         Some(3),
         None,
+        num_tokens,
         OpenEditionMinterCustomParams::default(),
         None,
         None,
@@ -64,10 +67,43 @@ fn check_mint_revenues_distribution() {
         .wrap()
         .query_wasm_smart(minter_addr.clone(), &query_end_time_msg)
         .unwrap();
-    assert_eq!(
-        res.end_time,
-        Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000).to_string()
-    );
+    if end_minter_time.is_some() {
+        assert_eq!(
+            res.end_time,
+            Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000).to_string())
+        );
+    } else {
+        assert_eq!(
+            res.end_time,
+            None
+        );
+    }
+
+    // Query the Max Tokens or End Time depending on which test is executed
+    let query_config_msg = QueryMsg::MintableNumTokens {};
+    let res: MintableNumTokensResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr.clone(), &query_config_msg)
+        .unwrap();
+    if end_minter_time.is_some() {
+        assert_eq!(res.count, None);
+    } else {
+        assert_eq!(res.count, Some(5));
+    }
+
+    // Query the Config info
+    let query_config_msg = QueryMsg::Config {};
+    let res: ConfigResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr.clone(), &query_config_msg)
+        .unwrap();
+    if end_minter_time.is_some() {
+        assert_eq!(res.num_tokens, None);
+        assert_eq!(res.end_time, end_minter_time);
+    } else {
+        assert_eq!(res.num_tokens, Some(5));
+        assert_eq!(res.end_time, None);
+    }
 
     // Query Total Minted Tokens -> Should be 0 at the start
     let query_total_minted_msg: QueryMsg = QueryMsg::TotalMintCount {};
@@ -275,10 +311,14 @@ fn check_mint_revenues_distribution() {
         &mint_msg,
         &coins(MINT_PRICE, NATIVE_DENOM),
     );
-    assert_eq!(
-        res.err().unwrap().source().unwrap().to_string(),
-        "Minting has ended"
-    );
+    if end_minter_time.is_some() {
+        assert_eq!(
+            res.err().unwrap().source().unwrap().to_string(),
+            "Minting has ended"
+        );
+    } else {
+        assert!(res.is_ok());
+    }
 
     // Try to execute admin only entry point from buyer
     let exec_msg = ExecuteMsg::MintTo {
@@ -311,7 +351,7 @@ fn check_mint_revenues_distribution() {
         .unwrap();
     assert_eq!(minter_balance.len(), 0);
 
-    // Creator can't use MintTo if sold out
+    // Creator can't use MintTo if the end time is < block time
     let res = router.execute_contract(
         creator.clone(),
         minter_addr.clone(),
@@ -321,7 +361,45 @@ fn check_mint_revenues_distribution() {
             denom: NATIVE_DENOM.to_string(),
         }),
     );
-    assert!(res.is_err());
+    if end_minter_time.is_some() {
+        assert!(res.is_err());
+    } else {
+        assert!(res.is_ok());
+    }
+
+    // Check if the count is accurate depending on the config of the test
+    // if no end time -> should be at 5 otherwise 3 as it would not be possible do use the mint to
+    let query_config_msg = QueryMsg::TotalMintCount {};
+    let res: TotalMintCountResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr.clone(), &query_config_msg)
+        .unwrap();
+    if end_minter_time.is_some() {
+        assert_eq!(res.count, 3);
+    } else {
+        assert_eq!(res.count, 5);
+    }
+
+    // It should not be possible to mint anymore in both cases
+    let mint_msg = ExecuteMsg::Mint {};
+    let res = router.execute_contract(
+        creator.clone(),
+        minter_addr.clone(),
+        &mint_msg,
+        &coins(MINT_PRICE, NATIVE_DENOM),
+    );
+    if end_minter_time.is_some() {
+        assert_eq!(
+            res.err().unwrap().source().unwrap().to_string(),
+            "Minting has ended"
+        );
+    } else {
+        assert_eq!(
+            res.err().unwrap().source().unwrap().to_string(),
+            "Sold out"
+        );
+    }
+
 
     // Can purge after sold out
     let purge_msg = ExecuteMsg::Purge {};
@@ -339,4 +417,21 @@ fn check_mint_revenues_distribution() {
         )
         .unwrap();
     assert_eq!(res.count, 0);
+
+}
+
+#[test]
+fn check_mint_revenues_distribution_without_end_time() {
+    check_mint_revenues_distribution(
+                    None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000))
+    )
+}
+
+#[test]
+fn check_mint_revenues_distribution_with_end_time() {
+    check_mint_revenues_distribution(
+        Some(5u32),
+        None
+    )
 }

@@ -1,3 +1,5 @@
+use cosmwasm_std::Timestamp;
+use sg_std::GENESIS_MINT_START_TIME;
 use crate::common_setup::templates::{
     open_edition_minter_custom_template, OpenEditionMinterCustomParams,
 };
@@ -7,10 +9,11 @@ fn invalid_code_id() {
     // Set an invalid code id for the nft contract
     let vt = open_edition_minter_custom_template(
         None,
-        None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         Some(10),
         Some(5),
+        None,
         None,
         OpenEditionMinterCustomParams::default(),
         None,

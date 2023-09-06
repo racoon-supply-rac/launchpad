@@ -6,6 +6,7 @@ mod tests {
         use open_edition_factory::msg::{
             OpenEditionUpdateParamsExtension, OpenEditionUpdateParamsMsg, ParamsResponse, SudoMsg,
         };
+        use crate::common_setup::setup_minter::common::constants::MAX_TOKEN_LIMIT;
 
         // Assumption: CreateMinter method is validated at the minter level
 
@@ -26,6 +27,7 @@ mod tests {
             assert_eq!(res.params.allowed_sg721_code_ids, vec![1, 3, 5, 6]);
             assert!(!res.params.frozen);
             assert_eq!(res.params.mint_fee_bps, 1000);
+            assert_eq!(res.params.extension.max_token_limit, MAX_TOKEN_LIMIT);
 
             let update_msg = OpenEditionUpdateParamsMsg {
                 add_sg721_code_ids: Some(vec![12, 24]),
@@ -37,6 +39,7 @@ mod tests {
                 mint_fee_bps: Some(2000),
                 max_trading_offset_secs: None,
                 extension: OpenEditionUpdateParamsExtension {
+                    max_token_limit: Some(9_999u32),
                     max_per_address_limit: None,
                     min_mint_price: None,
                     airdrop_mint_fee_bps: None,
@@ -53,6 +56,7 @@ mod tests {
             assert_eq!(res.params.allowed_sg721_code_ids, vec![3, 5, 6, 12, 24]);
             assert!(res.params.frozen);
             assert_eq!(res.params.mint_fee_bps, 2000);
+            assert_eq!(res.params.extension.max_token_limit, 9_999u32);
         }
     }
 }

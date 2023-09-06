@@ -342,6 +342,7 @@ pub fn open_edition_minter_custom_template(
     max_per_address_limit: Option<u32>,
     per_address_limit_minter: Option<u32>,
     mint_price_minter: Option<Coin>,
+    num_tokens: Option<u32>,
     custom_params: OpenEditionMinterCustomParams,
     sg721_code: Option<Box<dyn Contract<StargazeMsgWrapper>>>,
     sg721_codeid: Option<u64>,
@@ -371,7 +372,6 @@ pub fn open_edition_minter_custom_template(
 
     // Minter -> Default params
     let start_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 100);
-    let end_time = Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000);
     let per_address_limit_minter = per_address_limit_minter.or(Some(1));
     let mint_price = mint_price_minter.or_else(|| {
         Some(Coin {
@@ -389,9 +389,10 @@ pub fn open_edition_minter_custom_template(
     });
     let mut msg = mock_create_minter(
         start_minter_time.or(Some(start_time)),
-        end_minter_time.or(Some(end_time)),
+        end_minter_time,
         mint_price,
         per_address_limit_minter,
+        num_tokens,
         default_nft_data,
         collection_params,
         None,

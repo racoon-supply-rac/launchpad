@@ -13,10 +13,11 @@ use crate::common_setup::templates::{
 fn check_start_end_time_updates() {
     let vt = open_edition_minter_custom_template(
         None,
-        None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         Some(10),
         Some(2),
+        None,
         None,
         OpenEditionMinterCustomParams::default(),
         None,
@@ -47,7 +48,7 @@ fn check_start_end_time_updates() {
         .unwrap();
     assert_eq!(
         res.end_time,
-        Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000).to_string()
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000).to_string())
     );
 
     // Cant change start time to before the current time
@@ -132,6 +133,46 @@ fn check_start_end_time_updates() {
         .unwrap();
     assert_eq!(
         res.end_time,
-        Timestamp::from_nanos(GENESIS_MINT_START_TIME + 20_000).to_string()
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 20_000).to_string())
+    );
+}
+
+#[test]
+fn check_end_time_updates_for_non_predefined_end_time() {
+    let vt = open_edition_minter_custom_template(
+        None,
+        None,
+        None,
+        Some(10),
+        Some(2),
+        None,
+        Some(1_000u32),
+        OpenEditionMinterCustomParams::default(),
+        None,
+        None,
+    )
+        .unwrap();
+    let (mut router, creator, _buyer) = (vt.router, vt.accts.creator, vt.accts.buyer);
+    let minter_addr = vt.collection_response_vec[0].minter.clone().unwrap();
+
+    // Query End Time
+    // It should be None
+    let query_end_time_msg: QueryMsg = QueryMsg::EndTime {};
+    let res: EndTimeResponse = router
+        .wrap()
+        .query_wasm_smart(minter_addr.clone(), &query_end_time_msg)
+        .unwrap();
+    assert_eq!(
+        res.end_time,
+        None
+    );
+
+    // it should not be possible to change the end time if it wasnt previously set
+    let new_end_time_msg =
+        ExecuteMsg::UpdateEndTime(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 20_000));
+    let res = router.execute_contract(creator, minter_addr, &new_end_time_msg, &[]);
+    assert_eq!(
+        res.err().unwrap().source().unwrap().to_string(),
+        "No End Time Initially Defined"
     );
 }

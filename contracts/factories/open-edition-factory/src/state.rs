@@ -6,6 +6,8 @@ use sg2::MinterParams;
 
 #[cw_serde]
 pub struct ParamsExtension {
+    // If not unlimited, use the below
+    pub max_token_limit: u32,
     pub max_per_address_limit: u32,
     pub airdrop_mint_fee_bps: u64,
     pub airdrop_mint_price: Coin,

@@ -1,4 +1,4 @@
-use cosmwasm_std::{Coin, Uint128};
+use cosmwasm_std::{Coin, Timestamp, Uint128};
 use cw_multi_test::Executor;
 use sg_std::{GENESIS_MINT_START_TIME, NATIVE_DENOM};
 
@@ -15,10 +15,11 @@ const MINT_PRICE: u128 = 100_000_000;
 fn check_mint_price_updates() {
     let vt = open_edition_minter_custom_template(
         None,
-        None,
+        Some(Timestamp::from_nanos(GENESIS_MINT_START_TIME + 10_000)),
         None,
         Some(10),
         Some(2),
+        None,
         None,
         OpenEditionMinterCustomParams::default(),
         None,
